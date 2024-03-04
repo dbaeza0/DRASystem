@@ -1,0 +1,31 @@
+[flake8]
+# Maximum line length for your code
+max-line-length = 120
+
+# Exclude certain directories from linting
+exclude =
+    .git,
+    __pycache__,
+    venv,
+    docs,
+    *sql*
+
+# Plugins
+inline-quotes = double
+accept-encodings = utf-8
+
+# Ignore certain errors or warnings
+ignore =
+    # E203: whitespace before colon on list slice
+    E203,
+    # W503: whitespace before colon on list slice
+    W503
+
+# Select the checks that Flake8 should apply
+select = C,E,F,W,B,B9
+# Set the maximum McCabe complexity (complexity is a measure of code complexity)
+max-complexity = 10
+
+[pep8]
+# Set the same maximum line length as in [flake8]
+max-line-length = 120
