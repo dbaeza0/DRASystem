@@ -1,9 +1,9 @@
 from config import ConfigLoader
 from pathlib import Path
+from io import StringIO
 import pandas as pd
 import logging
 import os
-
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
 ingestion_logger = logging.getLogger()
@@ -30,7 +30,9 @@ def merge_multiple_dataframe(logger, dir_path: Path) -> [pd.DataFrame, list]:
     for csv_found in found_csvs:
         df = read_csv(logger, dir_path / csv_found)
         result_df = pd.concat([result_df, df], ignore_index=True)
-    logger.info(f"Resulting dataframe info: {result_df.info()}")
+    buffer = StringIO()
+    result_df.info(buf=buffer)
+    logger.info(f"Resulting dataframe info: {buffer.getvalue()}")
     return result_df, found_csvs
 
 
@@ -39,7 +41,8 @@ def save_csv(logger, df, dir_path: Path, filename='finaldata.csv') -> None:
     logger.info(f"Saving result dataset to: {full_path}")
     try:
         df.to_csv(full_path, index=False)
-    except FileNotFoundError:
+    except OSError:
+        logger.warn(f"Directory not found, creating: {dir_path}")
         os.mkdir(dir_path)
         df.to_csv(full_path, index=False)
     logger.info("Successfully saved")
@@ -48,10 +51,19 @@ def save_csv(logger, df, dir_path: Path, filename='finaldata.csv') -> None:
 def record_processed_datasets(logger, dir_path: Path, files: list, filename='ingestedfiles.txt') -> None:
     full_path = dir_path / filename
     logger.info(f"Recording ingested files to: {full_path}")
-    with open(full_path, 'w') as f:
-        for file in files:
-            f.write(file + '\n')
+    try:
+        dump_list_to_file(files, full_path)
+    except OSError:
+        logger.warn(f"Directory not found, creating: {dir_path}")
+        os.mkdir(dir_path)
+        dump_list_to_file(files, full_path)
     logger.info("Record successfully saved")
+
+
+def dump_list_to_file(in_list: list, filepath: Path) -> None:
+    with open(filepath, 'w') as f:
+        for element in in_list:
+            f.write(str(element) + '\n')
 
 
 def basic_df_preprocessing(logger, df: pd.DataFrame) -> pd.DataFrame:
@@ -59,9 +71,13 @@ def basic_df_preprocessing(logger, df: pd.DataFrame) -> pd.DataFrame:
     return df.drop_duplicates(ignore_index=True)
 
 
-if __name__ == "__main__":
+def run():
     config = ConfigLoader.init_from_json_file(ingestion_logger)
     res_df, csv_proccessed = merge_multiple_dataframe(ingestion_logger, config.input_folder_path)
     res_df = basic_df_preprocessing(ingestion_logger, res_df)
     save_csv(ingestion_logger, res_df, config.output_folder_path)
-    record_processed_datasets(ingestion_logger, config, csv_proccessed)
+    record_processed_datasets(ingestion_logger, config.output_folder_path, csv_proccessed)
+
+
+if __name__ == "__main__":
+    run()
