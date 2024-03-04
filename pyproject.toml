@@ -12,6 +12,7 @@ detect-secrets = "^1.4.0"
 autopep8 = "2.0.4"
 flake8 = "^7.0.0"
 pandas = "^2.2.1"
+scikit-learn = "^1.4.0"
 
 
 [build-system]
