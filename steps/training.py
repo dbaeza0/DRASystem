@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
 training_logger = logging.getLogger()
 
 
-def load_training_data(logger: logging.Logger, data_path: Path, file_name='finaldata.csv') -> (pd.DataFrame, pd.Series):
+def load_model_data(logger: logging.Logger, data_path: Path, file_name='finaldata.csv') -> (pd.DataFrame, pd.Series):
     file_path = data_path / file_name
     df = read_csv(logger, file_path)
     target_variable = 'exited'
@@ -51,7 +51,7 @@ def save_model(logger, model: LogisticRegression, model_path: Path, model_name='
 
 def run():
     config = ConfigLoader.init_from_json_file(training_logger)
-    train_df, target = load_training_data(training_logger, config.output_folder_path)
+    train_df, target = load_model_data(training_logger, config.output_folder_path)
     model = train_model(training_logger, train_df, target)
     save_model(training_logger, model, config.output_model_path)
 
