@@ -1,4 +1,4 @@
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LogisticRegression
 from steps.training import load_model_data
 from config import ConfigLoader
 from sklearn import metrics
@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
 scoring_logger = logging.getLogger()
 
 
-def load_model(logger, model_path: Path, model_name='trainedmodel.pkl') -> LinearRegression:
+def load_model(logger, model_path: Path, model_name='trainedmodel.pkl') -> LogisticRegression:
     model_file = model_path / model_name
     logger.info(f"Loading model from {model_file}")
     if not model_file.is_file():
@@ -19,7 +19,7 @@ def load_model(logger, model_path: Path, model_name='trainedmodel.pkl') -> Linea
     return pickle.load(open(model_file, "rb"))
 
 
-def score_model(logger, model: LinearRegression, x_df: pd.DataFrame, y: pd.Series):
+def score_model(logger, model: LogisticRegression, x_df: pd.DataFrame, y: pd.Series):
     logger.info(f"Scoring model {model.__class__}")
     y_pred = model.predict(x_df)
     f1_score = metrics.f1_score(y, y_pred)
