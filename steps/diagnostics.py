@@ -72,6 +72,7 @@ def outdated_packages_list(logger, directory: Path):
         logger.error(f"Failed to write dependency report to {file_full_path}: \n"
                      f"{e}")
     logger.info(f'Report written successfully at {file_full_path}')
+    return True
 
 
 def run():
