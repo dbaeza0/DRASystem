@@ -1,3 +1,4 @@
+import asyncio
 import os
 import subprocess
 import sys
@@ -73,7 +74,7 @@ class DependencyChecker:
         return pd.DataFrame({'Name': package_names, 'Version': package_versions})
 
     @staticmethod
-    def _check_for_updates():
+    async def _check_for_updates():
         try:
             result = subprocess.run([sys.executable, '-m', 'pip', 'list', '--outdated'],
                                     capture_output=True, text=True, check=True)
@@ -94,16 +95,18 @@ class DependencyChecker:
             print("Error:", e)
 
     @classmethod
-    def get_dependency_check(cls):
-        current_df = cls._get_module_versions()
-        latest_df = cls._check_for_updates()
+    async def get_dependency_check(cls):
+        get_current_df = asyncio.create_task(cls._get_module_versions())
+        get_latest_df = asyncio.create_task(cls._check_for_updates())
+        current_df, latest_df = asyncio.gather(get_current_df, get_latest_df)
+
         merged_df = pd.merge(current_df, latest_df, on='Name', how='left')
         merged_df['Latest_Version'] = merged_df['Latest_Version'].fillna(merged_df['Version'])
         return merged_df
 
     @classmethod
     def write_dependency_report(cls, directory: Path) -> Path:
-        dependencies = cls.get_dependency_check()
+        dependencies = asyncio.run(cls.get_dependency_check())
         file_full_path = directory / 'dependencyreport.txt'
         dependencies.to_csv(file_full_path, sep='\t', index=False)
         return file_full_path
