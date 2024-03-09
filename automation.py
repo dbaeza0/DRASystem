@@ -61,7 +61,8 @@ class AutomatedPipeline:
 class DependencyChecker:
 
     @staticmethod
-    def _get_module_versions():
+    async def _get_module_versions():
+        print("Getting module versions...")
         installed_packages = metadata.distributions()
         package_names = []
         package_versions = []
@@ -75,6 +76,7 @@ class DependencyChecker:
 
     @staticmethod
     async def _check_for_updates():
+        print('Checking for updates...')
         try:
             result = subprocess.run([sys.executable, '-m', 'pip', 'list', '--outdated'],
                                     capture_output=True, text=True, check=True)
@@ -96,9 +98,7 @@ class DependencyChecker:
 
     @classmethod
     async def get_dependency_check(cls):
-        get_current_df = asyncio.create_task(cls._get_module_versions())
-        get_latest_df = asyncio.create_task(cls._check_for_updates())
-        current_df, latest_df = asyncio.gather(get_current_df, get_latest_df)
+        current_df, latest_df = await asyncio.gather(cls._get_module_versions(), cls._check_for_updates())
 
         merged_df = pd.merge(current_df, latest_df, on='Name', how='left')
         merged_df['Latest_Version'] = merged_df['Latest_Version'].fillna(merged_df['Version'])
