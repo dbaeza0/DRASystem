@@ -39,7 +39,7 @@ def predict():
 def scoring():
     data_x, data_y = load_model_data(app_logger, config.test_data_path, file_name='testdata.csv')
     score = score_model(app_logger, prediction_model, data_x, data_y)
-    return jsonify({"model": prediction_model.__class__, "f1score": score})
+    return jsonify({"model": str(prediction_model.__class__), "f1score": score})
 
 
 @app.route("/summarystats", methods=['GET', 'OPTIONS'])
