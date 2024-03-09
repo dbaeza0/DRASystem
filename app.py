@@ -69,7 +69,7 @@ def diagnostics():
 @app.route("/write_dependency_report", methods=['GET', 'OPTIONS'])
 def write_dependency_report():
     if outdated_packages_list(app_logger, config.prod_deployment_path):
-        return jsonify({'Dependency report written correctly'})
+        return jsonify('Dependency report written correctly')
     else:
         abort(500, "Could not write dependency report.")
 
