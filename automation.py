@@ -1,13 +1,14 @@
-import asyncio
-import os
-import subprocess
-import sys
-from dataclasses import dataclass
-from enum import Enum
-from pathlib import Path
+from apicalls import InvokeRestMethod, URL
+from typing import Iterator, Coroutine
 import importlib.metadata as metadata
-
+from dataclasses import dataclass
+from pathlib import Path
+from enum import Enum
 import pandas as pd
+import subprocess
+import asyncio
+import sys
+import os
 
 
 class CommandLineRunner(Enum):
@@ -110,3 +111,60 @@ class DependencyChecker:
         file_full_path = directory / 'dependencyreport.txt'
         dependencies.to_csv(file_full_path, sep='\t', index=False)
         return file_full_path
+
+
+class TestAPI:
+
+    no_parameter_endpoints = [["summarystats", "scoring"], "write_dependency_report", "diagnostics"]
+
+    parameter_endpoints = {
+        "async": [{
+            "prediction": {
+                "dataset_location": "testdata",
+                "dataset_name": "testdata.csv"
+            }
+        }]
+
+    }
+
+    @classmethod
+    def hit_all_api_endpoints(cls):
+        results = asyncio.run(cls.hit_non_parameters_endpoints(cls.no_parameter_endpoints))
+        results += asyncio.run(cls.hit_parameters_endpoints(cls.parameter_endpoints))
+        InvokeRestMethod.write_responses_to_file(results)
+
+    @classmethod
+    async def hit_non_parameters_endpoints(cls, endpoints: list) -> list:
+        results = []
+        for task in endpoints:
+            if isinstance(task, list):
+                async_calls = [InvokeRestMethod.get(f"{URL}/{_}") for _ in task]
+                result = await asyncio.gather(*async_calls, return_exceptions=True)
+                results += result
+            else:
+                result = await InvokeRestMethod.get(f"{URL}/{task}")
+                results.append(result)
+        return results
+
+    @classmethod
+    async def hit_parameters_endpoints(cls, endpoints: dict) -> list:
+        results = []
+        for endpoint, values in endpoints.items():
+            if endpoint == "async":
+                async_calls = cls.collect_calls_from_dict(values)
+                result = await asyncio.gather(*async_calls)
+                results += result
+            else:
+                result = await InvokeRestMethod.post(f"{URL}/{endpoint}", body=values)
+                results.append(result)
+        return results
+
+    @staticmethod
+    def collect_calls_from_dict(calls: Iterator[dict]) -> list[Coroutine]:
+        results = []
+        for call in calls:
+            endpoint = list(call.keys())[0]
+            body = call[endpoint]
+            request = InvokeRestMethod.post(f"{URL}/{endpoint}", body=body)
+            results.append(request)
+        return results
