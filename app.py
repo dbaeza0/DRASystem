@@ -1,12 +1,13 @@
-import pandas as pd
-
+from steps.diagnostics import model_predictions, dataframe_summary, missing_data, execution_time, outdated_packages_list
 from steps.scoring import load_model, score_model
 from flask import Flask, jsonify, request, abort
-from steps.diagnostics import model_predictions, dataframe_summary, missing_data, execution_time, outdated_packages_list
 from steps.training import load_model_data
 from config import ConfigLoader
 from dataclasses import asdict
+from pathlib import Path
+import pandas as pd
 import logging
+
 
 app = Flask(__name__)
 app.secret_key = '1652d576-484a-49fd-913a-6879acfa6ba4'
@@ -21,7 +22,7 @@ prediction_model = load_model(app_logger, config.output_model_path)
 
 @app.route("/prediction", methods=['POST', 'OPTIONS'])
 def predict():
-    dataset_path = request.get_json()['dataset_location']
+    dataset_path = Path.cwd() / request.get_json()['dataset_location']
     dataset_name = request.get_json()['dataset_name']
 
     try:
@@ -32,7 +33,8 @@ def predict():
                           f"error message: {e}")
 
     y_pred = model_predictions(app_logger, prediction_model, data_x)
-    return jsonify({"dataset_name": dataset_name, "model": prediction_model.__class__, "y_pred": y_pred})
+    return jsonify({"dataset_name": dataset_name, "model": str(prediction_model.__class__),
+                    "y_pred": y_pred.tolist()})
 
 
 @app.route("/scoring", methods=['GET', 'OPTIONS'])
