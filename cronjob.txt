@@ -1,0 +1,2 @@
+*/10 * * * *   /mnt/c/Users/danii/Desktop/DRASystem/fullprocess.sh
+# the path is the one I used for my wsl Ubuntu

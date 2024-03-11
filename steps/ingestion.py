@@ -61,7 +61,7 @@ def record_processed_datasets(logger, dir_path: Path, files: list, filename='ing
 
 
 def dump_list_to_file(in_list: list, filepath: Path) -> None:
-    with open(filepath, 'w') as f:
+    with open(filepath, 'a') as f:
         for element in in_list:
             f.write(str(element) + '\n')
 

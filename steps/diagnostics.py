@@ -50,12 +50,15 @@ def missing_data(logger, x_df: pd.DataFrame) -> dict:
     return missing.to_dict()
 
 
-def execution_time(logger):
-    logger.info('Timing ingestion and training pipeline steps')
-    start_time = timeit.default_timer()
-    AutomatedPipeline.run_task("ingestion")
-    ingestion_timing = timeit.default_timer() - start_time
-
+def execution_time(logger, ingest=True):
+    ingestion_timing = None
+    if ingest:
+        logger.info('Timing ingestion and training pipeline steps')
+        start_time = timeit.default_timer()
+        AutomatedPipeline.run_task("ingestion")
+        ingestion_timing = timeit.default_timer() - start_time
+    else:
+        logger.info('Skip ingestion, Timing training pipeline steps')
     start_time = timeit.default_timer()
     AutomatedPipeline.run_task("training")
     training_timing = timeit.default_timer() - start_time

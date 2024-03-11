@@ -17,14 +17,12 @@ app_logger = logging.getLogger()
 
 config = ConfigLoader.init_from_json_file(app_logger)
 
-prediction_model = load_model(app_logger, config.output_model_path)
-
 
 @app.route("/prediction", methods=['POST', 'OPTIONS'])
 def predict():
+    prediction_model = load_model(app_logger, config.prod_deployment_path)
     dataset_path = Path.cwd() / request.get_json()['dataset_location']
     dataset_name = request.get_json()['dataset_name']
-
     try:
         data_x, data_y = load_model_data(app_logger, dataset_path, file_name=dataset_name)
     except Exception as e:
@@ -39,6 +37,7 @@ def predict():
 
 @app.route("/scoring", methods=['GET', 'OPTIONS'])
 def scoring():
+    prediction_model = load_model(app_logger, config.prod_deployment_path)
     data_x, data_y = load_model_data(app_logger, config.test_data_path, file_name='testdata.csv')
     score = score_model(app_logger, prediction_model, data_x, data_y)
     return jsonify({"model": str(prediction_model.__class__), "f1score": score})
@@ -55,7 +54,7 @@ def summarystats():
 def diagnostics():
     stats_x, _ = load_model_data(app_logger, config.output_folder_path)
     miss_data = missing_data(app_logger, stats_x)
-    times = execution_time(app_logger)
+    times = execution_time(app_logger, ingest=False)
     dep_report = config.prod_deployment_path / 'dependencyreport.txt'
     if not dep_report.exists():
         abort(404, f"Dependency report not found at {dep_report}\n"
